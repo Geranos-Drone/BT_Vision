@@ -1,0 +1,3 @@
+[submodule "3rdparty/openpifpaf"]
+	path = 3rdparty/openpifpaf
+	url = git@github.com:openpifpaf/openpifpaf.git
