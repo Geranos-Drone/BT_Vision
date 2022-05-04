@@ -18,7 +18,7 @@ import cv2
 import numpy as np
 from PIL import Image
 
-import matplotlib.pyplot
+import matplotlib.pyplot as plt
 
 POLE_KEYPOINTS = [
     'star',        #1
@@ -121,6 +121,7 @@ class LSJsonToCoco:
                 cnt_images += 1
                 self._process_image(im_path)
                 
+                annotation_id += 1
                 self._process_annotation(data, im_size, im_id, cnt_kps, annotation_id)
                 cnt_instances += 1
             
@@ -198,12 +199,12 @@ class LSJsonToCoco:
         return (width, height), im_name, im_id
         
     
-    def _process_annotation(self, data, im_size, im_id, cnt_kps,annotation_id):
+    def _process_annotation(self, data, im_size, im_id, cnt_kps, annotation_id):
         """Process single instance of annotations"""
         
         for i_1 in range(len(data)):
             if data[i_1].get('id') == im_id:
-                annotation_id += 1
+                
                 keypoints_coco = []
                 bbox_inst = []
                 area_inst = []
@@ -214,7 +215,7 @@ class LSJsonToCoco:
                 y_i = []
                 im_size = [result_inst[0]['original_width'],result_inst[0]['original_height']]
                 for label_index, label_inst in enumerate(POLE_KEYPOINTS):
-                    if result_inst[i_2]['value']['keypointlabels'][0] == label_inst:
+                    if (i_2 < len(result_inst)) and (result_inst[i_2]['value']['keypointlabels'][0] == label_inst):
                         x_ii = result_inst[i_2]['value']['x']*im_size[0]/100
                         y_ii = result_inst[i_2]['value']['y']*im_size[1]/100
                         keypoints_coco.append(x_ii)
