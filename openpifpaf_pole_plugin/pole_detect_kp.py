@@ -11,17 +11,17 @@ from openpifpaf import encoder, headmeta, metric, transforms
 from openpifpaf.datasets import collate_images_anns_meta, collate_images_targets_meta
 from openpifpaf.plugins.coco import CocoDataset as CocoLoader
 
-from .constants import POLE_KEYPOINTS, HFLIP, POLE_SKELETON, POLE_SIGMAS, POLE_CATEGORIES, POLE_POSE
+from .constants import POLE_KEYPOINTS, HFLIP, POLE_SKELETON, POLE_SIGMAS, POLE_CATEGORIES, POLE_POSE, POLE_SCORE_WEIGHTS
 
-class PoleDetecKp(DataModule):
+class PoleDetectKp(DataModule):
     """
     DataModule for the Geranos Pole Dataset.
     """
-    train_annotations = 'data/dataset_test.json'
-    val_annotations = 'data/dataset_test.json'
+    train_annotations = '/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/annotations/pole_keypoints_8_train.json'
+    val_annotations = '/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/annotations/pole_keypoints_8_val.json'
     eval_annotations = val_annotations
-    train_image_dir = 'images/'
-    val_image_dir = 'images/'
+    train_image_dir = '/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/images/train'
+    val_image_dir = '/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/images/val'
     eval_image_dir = val_image_dir
 
     n_images = None
@@ -44,17 +44,17 @@ class PoleDetecKp(DataModule):
         super().__init__()
         # CIF (Composite Intensity Fields) to detect keypoints, and CAF (Composite Association Fields) to associate joints
         cif = headmeta.Cif('cif', 'pole_detect',
-                           keypoints=self.POLE_KEYPOINTS,
-                           sigmas=self.POLE_SIGMAS,
-                           pose=self.POLE_POSE,
-                           draw_skeleton=self.POLE_SKELETON,
-                           score_weights=self.POLE_SCORE_WEIGHTS)
+                           keypoints=POLE_KEYPOINTS,
+                           sigmas=POLE_SIGMAS,
+                           pose=POLE_POSE,
+                           draw_skeleton=POLE_SKELETON,
+                           score_weights=POLE_SCORE_WEIGHTS)
 
         caf = headmeta.Caf('caf', 'pole_detect',
-                           keypoints=self.POLE_KEYPOINTS,
-                           sigmas=self.POLE_SIGMAS,
-                           pose=self.POLE_POSE,
-                           skeleton=self.POLE_SKELETON)
+                           keypoints=POLE_KEYPOINTS,
+                           sigmas=POLE_SIGMAS,
+                           pose=POLE_POSE,
+                           skeleton=POLE_SKELETON)
 
         cif.upsample_stride = self.upsample_stride
         caf.upsample_stride = self.upsample_stride
@@ -62,7 +62,7 @@ class PoleDetecKp(DataModule):
 
     @classmethod
     def cli(cls, parser: argparse.ArgumentParser):
-        group = parser.add_argument_group('data module Apollo')
+        group = parser.add_argument_group('data module to detect poles')
 
         group.add_argument('--pole_detect-train-annotations',
                            default=cls.train_annotations)
@@ -88,7 +88,7 @@ class PoleDetecKp(DataModule):
                            help='augment with blur')
         assert cls.augmentation
         group.add_argument('--pole_detect-no-augmentation',
-                           dest='apollo_augmentation',
+                           dest='pole_detect_augmentation',
                            default=True, action='store_false',
                            help='do not apply data augmentation')
         group.add_argument('--pole_detect-rescale-images',
@@ -107,7 +107,7 @@ class PoleDetecKp(DataModule):
         # evaluation
         assert cls.eval_annotation_filter
         group.add_argument('--pole_detect-no-eval-annotation-filter',
-                           dest='apollo_eval_annotation_filter',
+                           dest='pole_detect_eval_annotation_filter',
                            default=True, action='store_false')
         group.add_argument('--pole_detect-eval-long-edge', default=cls.eval_long_edge, type=int,
                            help='set to zero to deactivate rescaling')
@@ -116,7 +116,7 @@ class PoleDetecKp(DataModule):
         group.add_argument('--pole_detect-eval-orientation-invariant',
                            default=cls.eval_orientation_invariant, type=float)
 
-     @classmethod
+    @classmethod
     def configure(cls, args: argparse.Namespace):
         # extract global information
         cls.debug = args.debug
@@ -147,16 +147,81 @@ class PoleDetecKp(DataModule):
         cls.eval_extended_scale = args.pole_detect_eval_extended_scale
 
     def _preprocess(self):
+        encoders = (encoder.Cif(self.head_metas[0], bmin=self.b_min),
+                    encoder.Caf(self.head_metas[1], bmin=self.b_min))
+
+        return transforms.Compose([
+            transforms.NormalizeAnnotations(),
+            transforms.Crop(self.square_edge, use_area_of_interest=True),
+            transforms.Encoders(encoders),
+        ])
 
     def train_loader(self):
+        train_data = CocoLoader(
+            image_dir=self.train_image_dir,
+            ann_file = self.train_annotations,
+            preprocess=self._preprocess(),
+            annotation_filter=True,
+            min_kp_anns=self.min_kp_anns,
+            category_ids=[1],
+        )
+        print("train_loader was called")
+        print("batch size = ", self.batch_size)
+
+        return torch.utils.data.DataLoader(
+            train_data, batch_size=self.batch_size, shuffle=not self.debug,
+            pin_memory=self.pin_memory, num_workers=self.loader_workers,
+            drop_last=False, collate_fn = collate_images_targets_meta) #drop_last = True eigt.
 
     def val_loader(self):
+        val_data = CocoLoader(
+            image_dir=self.val_image_dir,
+            ann_file=self.val_annotations,
+            preprocess=self._preprocess(),
+            annotation_filter=True,
+            min_kp_anns=self.min_kp_anns,
+            category_ids=[1],
+        )
+        return torch.utils.data.DataLoader(
+            val_data, batch_size=self.batch_size, shuffle=False,
+            pin_memory=self.pin_memory, num_workers=self.loader_workers, drop_last=False, 
+            collate_fn=collate_images_targets_meta) #drop_last = True eigt.
 
     @classmethod
     def common_eval_preprocess(cls):
+        return [transforms.NormalizeAnnotations(),]
 
     def _eval_preprocess(self):
+        return transforms.Compose([
+            *self.common_eval_preprocess(),
+            transforms.ToAnnotations([
+                transforms.ToKpAnnotations(
+                    POLE_CATEGORIES,
+                    keypoints_by_category={1: self.head_metas[0].keypoints},
+                    skeleton_by_category={1: self.head_metas[1].skeleton},
+                ),
+                transforms.ToCrowdAnnotations(POLE_CATEGORIES),
+            ]),
+            transforms.EVAL_TRANSFORM,
+        ])
 
     def eval_loader(self):
+        eval_data = CocoLoader(
+            image_dir=self.eval_image_dir,
+            ann_file=self.eval_annotations,
+            preprocess=self._eval_preprocess(),
+            annotation_filter=self.eval_annotation_filter,
+            min_kp_anns=self.min_kp_anns if self.eval_annotation_filter else 0,
+            category_ids=[1] if self.eval_annotation_filter else [],
+        )
+        return torch.utils.data.DataLoader(
+            eval_data, batch_size=self.batch_size, shuffle=False,
+            pin_memory=self.pin_memory, num_workers=self.loader_workers, drop_last=False,
+            collate_fn=collate_images_anns_meta)
 
     def metrics(self):
+        return [metric.Coco(COCO(self.eval_annotations),
+                max_per_image=20,
+                category_ids=[1],
+                iou_type='keypoints',
+                keypoint_oks_sigmas=POLE_SIGMAS,)]
