@@ -22,10 +22,10 @@ POLE_SKELETON = [
 
 #Pole Sigmas onlydefault values atm!
 POLE_SIGMAS = [
-    0.25,
-    0.25,
-    0.25,
-    0.25
+    0.1,
+    0.1,
+    0.1,
+    0.1
 ]
 
 POLE_CATEGORIES = ['pole']
@@ -37,5 +37,10 @@ POLE_POSE = np.array([
         [0.4, 4.7, 2.0],  # 'bottom_right',     # 3
         [-0.7, 5.0, 2.0],  # 'bottom_left',     # 4
     ])
+
+#Score Weights copied from Animal KP
+split, error = divmod(len(POLE_KEYPOINTS), 4)
+POLE_SCORE_WEIGHTS = [5.0] * split + [3.0] * split + [1.0] * split + [0.5] * split + [0.1] * error
+
 
 assert len(POLE_KEYPOINTS) == len(POLE_SIGMAS), "dimensions!"

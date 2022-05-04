@@ -1,9 +1,12 @@
 import io
 import numpy as np
 import PIL
+from PIL import Image
+import torchvision
 import requests
 import torch
 import openpifpaf
+
 
 print('OpenPifPaf version', openpifpaf.__version__)
 print('PyTorch version', torch.__version__)
@@ -15,7 +18,7 @@ im = np.asarray(pil_im)
 with openpifpaf.show.image_canvas(im) as ax:
     pass
 
-predictor = openpifpaf.Predictor(checkpoint='shufflenetv2k16')
+predictor = openpifpaf.Predictor(checkpoint='shufflenetv2k16') #ATM only resnet50 works..
 predictions, gt_anns, image_meta = predictor.pil_image(pil_im)
 
 annotation_painter = openpifpaf.show.AnnotationPainter()
