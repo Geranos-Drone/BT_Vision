@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[11]:
+# In[1]:
 
 
 """
@@ -14,6 +14,7 @@ from shutil import copyfile
 import json
 import argparse
 import cv2
+import re
 
 import numpy as np
 from PIL import Image
@@ -96,8 +97,7 @@ class LSJsonToCoco:
         img_ids = []
         annotation_id = 10000
         
-        with open(os.path.join(self.dir_dataset,'annotations','ls_export.json')) as json_file:
-            data = json.load(json_file)
+        data = self._load_lsjson(os.path.join(self.dir_dataset,'annotations','ls_export.json'))
         
         for phase, im_paths in self.splits.items():
             
@@ -119,7 +119,6 @@ class LSJsonToCoco:
             for im_path in im_paths:
                 im_size, im_name, im_id = self._process_image(im_path)
                 cnt_images += 1
-                self._process_image(im_path)
                 
                 annotation_id += 1
                 self._process_annotation(data, im_size, im_id, cnt_kps, annotation_id)
@@ -137,7 +136,7 @@ class LSJsonToCoco:
         
             self.save_coco_files(phase)
             print(f'\nPhase:{phase}')
-            print(f'Average number of keypoints labelled: {sum(cnt_kps) / cnt_instances:.1f} / 66')
+            print(f'Average number of keypoints labelled: {sum(cnt_kps) / cnt_instances:.1f} / {len(POLE_KEYPOINTS)}')
             print(f'COCO files directory:  {self.dir_out_ann}')
             print(f'Saved {cnt_instances} instances over {cnt_images} images ')
             if self.histogram:
@@ -253,7 +252,20 @@ class LSJsonToCoco:
                 self.coco_file["annotations"].append(dict_ann)
         
         return cnt_kps
-        
+    
+    def _load_lsjson(self, path):
+        with open(path) as json_file:
+            data_ = json.load(json_file)
+
+               
+        for it in range(len(data_)):
+            img_name_ = data_[it]['file_upload'].split(sep='_')[1]
+            img_id_ = int(img_name_.split(sep='.')[0])
+            data_[it]['id'] = img_id_
+            data_[it]['annotations'][0]['id'] = img_id_
+
+            
+        return data_
 
 def histogram(cnt_kps):
     bins = np.arange(len(cnt_kps))
