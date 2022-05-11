@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[13]:
 
 
 """
@@ -15,6 +15,7 @@ import json
 import argparse
 import cv2
 import re
+import shutil
 
 import numpy as np
 from PIL import Image
@@ -35,8 +36,6 @@ POLE_KEYPOINTS = [
 POLE_SKELETON = [
     [1,2],[1,4],[1,5],[2,3],[2,6],[3,4],[3,7],[4,8],[5,8],[5,6],[6,7],[7,8]
 ]
-
-
 
 def cli():
     parser = argparse.ArgumentParser(description=__doc__,
@@ -117,7 +116,7 @@ class LSJsonToCoco:
                 print(f'Single sample for train/val:{im_paths}')
             
             for im_path in im_paths:
-                im_size, im_name, im_id = self._process_image(im_path)
+                im_size, im_name, im_id = self._process_image(im_path,phase)
                 cnt_images += 1
                 
                 annotation_id += 1
@@ -177,16 +176,15 @@ class LSJsonToCoco:
                 json.dump(co_file, outfile)
             
         
-    def _process_image(self, im_path):
+    def _process_image(self, im_path, phase):
         """Update image field in json file"""
         file_name = os.path.basename(im_path)
-        im_name = os.path.splitext(file_name)[0]
+        im_name = os.path.splitext(file_name)[0] # 
         im_id = int(im_name.split(sep='_')[1])  # Numeric code in the image
         im = Image.open(im_path)
         width, height = im.size
         dict_img = {
             'coco_url': "unknown",
-            'flickr_url': "unknown",
             'file_name': file_name,
             'id': im_id,
             'license': 1,
@@ -195,6 +193,8 @@ class LSJsonToCoco:
             'height': height}
         self.coco_file["images"].append(dict_img)
         
+        shutil.copy(im_path, os.path.join(self.dir_out_im,phase))
+
         return (width, height), im_name, im_id
         
     
@@ -202,7 +202,7 @@ class LSJsonToCoco:
         """Process single instance of annotations"""
         
         for i_1 in range(len(data)):
-            if data[i_1].get('id') == im_id:
+            if int(data[i_1]['file_upload'].split(sep = '_')[-1].split(sep = ".")[0]) == im_id:
                 
                 keypoints_coco = []
                 bbox_inst = []
@@ -293,6 +293,26 @@ def main():
     
 if __name__ == "__main__":
     main()
+
+"""path = os.path.join('test_dataset','annotations','ls_export.json')
+
+with open(path) as json_file:
+    data_ = json.load(json_file)
+
+
+for it in range(len(data_)):
+    img_name_ = data_[it]['file_upload'].split(sep='_')[1]
+    img_id_ = int(img_name_.split(sep='.')[0])
+    data_[it]['id'] = img_id_
+    data_[it]['annotations'][0]['id'] = img_id_
+
+data = data_
+im_id = 1002
+
+for i_1 in range(len(data)):
+    print(data[i_1]['file_upload'].split(sep = '_')[-1].split(sep = ".")[0])
+    if int(data[i_1]['file_upload'].split(sep = '_')[-1].split(sep = ".")[0]) == im_id:
+        print("1002")"""
 
 
 # In[ ]:
