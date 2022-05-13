@@ -11,7 +11,7 @@ from openpifpaf import encoder, headmeta, metric, transforms
 from openpifpaf.datasets import collate_images_anns_meta, collate_images_targets_meta
 from openpifpaf.plugins.coco import CocoDataset as CocoLoader
 
-from .constants import POLE_KEYPOINTS, HFLIP, POLE_SKELETON, POLE_SIGMAS, POLE_CATEGORIES, POLE_POSE, POLE_SCORE_WEIGHTS
+from .constants import POLE_KEYPOINTS, POLE_SKELETON, POLE_SIGMAS, POLE_CATEGORIES, POLE_POSE, POLE_SCORE_WEIGHTS
 
 class PoleDetectKp(DataModule):
     """
@@ -20,8 +20,8 @@ class PoleDetectKp(DataModule):
     train_annotations = '/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/annotations/pole_keypoints_8_train.json'
     val_annotations = '/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/annotations/pole_keypoints_8_val.json'
     eval_annotations = val_annotations
-    train_image_dir = '/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/images/train'
-    val_image_dir = '/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/images/val'
+    train_image_dir = '/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/images/train/'
+    val_image_dir = '/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/images/val/'
     eval_image_dir = val_image_dir
 
     n_images = None
@@ -163,7 +163,7 @@ class PoleDetectKp(DataModule):
             preprocess=self._preprocess(),
             annotation_filter=True,
             min_kp_anns=self.min_kp_anns,
-            category_ids=[1],
+            category_ids=[420],
         )
         print("train_loader was called")
         print("batch size = ", self.batch_size)
@@ -180,7 +180,7 @@ class PoleDetectKp(DataModule):
             preprocess=self._preprocess(),
             annotation_filter=True,
             min_kp_anns=self.min_kp_anns,
-            category_ids=[1],
+            category_ids=[420],
         )
         return torch.utils.data.DataLoader(
             val_data, batch_size=self.batch_size, shuffle=False,
@@ -212,7 +212,7 @@ class PoleDetectKp(DataModule):
             preprocess=self._eval_preprocess(),
             annotation_filter=self.eval_annotation_filter,
             min_kp_anns=self.min_kp_anns if self.eval_annotation_filter else 0,
-            category_ids=[1] if self.eval_annotation_filter else [],
+            category_ids=[420] if self.eval_annotation_filter else [],
         )
         return torch.utils.data.DataLoader(
             eval_data, batch_size=self.batch_size, shuffle=False,
@@ -222,6 +222,6 @@ class PoleDetectKp(DataModule):
     def metrics(self):
         return [metric.Coco(COCO(self.eval_annotations),
                 max_per_image=20,
-                category_ids=[1],
+                category_ids=[420],
                 iou_type='keypoints',
                 keypoint_oks_sigmas=POLE_SIGMAS,)]
