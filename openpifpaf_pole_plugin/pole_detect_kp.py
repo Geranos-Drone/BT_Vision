@@ -40,6 +40,9 @@ class PoleDetectKp(DataModule):
     eval_orientation_invariant = 0.0
     eval_extended_scale = False
 
+    batch_size = 8
+    loader_workers = 0
+
     def __init__(self):
         super().__init__()
         # CIF (Composite Intensity Fields) to detect keypoints, and CAF (Composite Association Fields) to associate joints
@@ -153,6 +156,7 @@ class PoleDetectKp(DataModule):
         return transforms.Compose([
             transforms.NormalizeAnnotations(),
             transforms.Crop(self.square_edge, use_area_of_interest=True),
+            transforms.TRAIN_TRANSFORM, #converts PIL.Image to np.array
             transforms.Encoders(encoders),
         ])
 
@@ -197,8 +201,8 @@ class PoleDetectKp(DataModule):
             transforms.ToAnnotations([
                 transforms.ToKpAnnotations(
                     POLE_CATEGORIES,
-                    keypoints_by_category={1: self.head_metas[0].keypoints},
-                    skeleton_by_category={1: self.head_metas[1].skeleton},
+                    keypoints_by_category={420: self.head_metas[0].keypoints},
+                    skeleton_by_category={420: self.head_metas[1].skeleton},
                 ),
                 transforms.ToCrowdAnnotations(POLE_CATEGORIES),
             ]),
@@ -212,7 +216,7 @@ class PoleDetectKp(DataModule):
             preprocess=self._eval_preprocess(),
             annotation_filter=self.eval_annotation_filter,
             min_kp_anns=self.min_kp_anns if self.eval_annotation_filter else 0,
-            category_ids=[420] if self.eval_annotation_filter else [],
+            category_ids=[420] if self.eval_annotation_filter else [420],
         )
         return torch.utils.data.DataLoader(
             eval_data, batch_size=self.batch_size, shuffle=False,

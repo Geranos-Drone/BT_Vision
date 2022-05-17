@@ -11,14 +11,15 @@ import openpifpaf
 print('OpenPifPaf version', openpifpaf.__version__)
 print('PyTorch version', torch.__version__)
 
-image_response = requests.get('https://raw.githubusercontent.com/openpifpaf/openpifpaf/main/docs/coco/000000081988.jpg')
-pil_im = PIL.Image.open(io.BytesIO(image_response.content)).convert('RGB')
+# image_response = requests.get('https://raw.githubusercontent.com/openpifpaf/openpifpaf/main/docs/coco/000000081988.jpg')
+# pil_im = PIL.Image.open(io.BytesIO(image_response.content)).convert('RGB')
+pil_im = Image.open("/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/images/val/220511_1013.jpg")
 im = np.asarray(pil_im)
 
 with openpifpaf.show.image_canvas(im) as ax:
     pass
 
-predictor = openpifpaf.Predictor(checkpoint='shufflenetv2k16') #ATM only resnet50 works..
+predictor = openpifpaf.Predictor(checkpoint='resnet50') 
 predictions, gt_anns, image_meta = predictor.pil_image(pil_im)
 
 annotation_painter = openpifpaf.show.AnnotationPainter()
