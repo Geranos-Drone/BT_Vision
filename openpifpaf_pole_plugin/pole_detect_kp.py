@@ -17,11 +17,11 @@ class PoleDetectKp(DataModule):
     """
     DataModule for the Geranos Pole Dataset.
     """
-    train_annotations = '/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/annotations/pole_keypoints_8_train.json'
-    val_annotations = '/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/annotations/pole_keypoints_8_val.json'
+    train_annotations = 'convert_to_coco/test_dataset_coco/annotations/pole_keypoints_8_train.json'
+    val_annotations = 'convert_to_coco/test_dataset_coco/annotations/pole_keypoints_8_val.json'
     eval_annotations = val_annotations
-    train_image_dir = '/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/images/train/'
-    val_image_dir = '/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/images/val/'
+    train_image_dir = 'convert_to_coco/test_dataset_coco/images/train/'
+    val_image_dir = 'convert_to_coco/test_dataset_coco/images/val/'
     eval_image_dir = val_image_dir
 
     n_images = None
