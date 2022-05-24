@@ -13,7 +13,6 @@ import time
 from shutil import copyfile
 import json
 import argparse
-import cv2
 import re
 import shutil
 
@@ -192,8 +191,6 @@ class LSJsonToCoco:
             'width': width,
             'height': height}
         self.coco_file["images"].append(dict_img)
-        
-        shutil.copy(im_path, os.path.join(self.dir_out_im,phase))
 
         return (width, height), im_name, im_id
         
@@ -212,6 +209,7 @@ class LSJsonToCoco:
                 i_2 = 0
                 x_i = []
                 y_i = []
+                num_keypoints = 0
                 im_size = [result_inst[0]['original_width'],result_inst[0]['original_height']]
                 for label_index, label_inst in enumerate(POLE_KEYPOINTS):
                     if (i_2 < len(result_inst)) and (result_inst[i_2]['value']['keypointlabels'][0] == label_inst):
@@ -223,6 +221,7 @@ class LSJsonToCoco:
                         y_i.append(y_ii)
                         keypoints_coco.append(2)
                         cnt_kps[label_index] += 1
+                        num_keypoints += 1
 
                         i_2 += 1
                     else:
@@ -241,7 +240,7 @@ class LSJsonToCoco:
                 
                 dict_ann ={
                     "segmentation":[],
-                    "num_keypoints": len(POLE_KEYPOINTS),
+                    "num_keypoints": num_keypoints,
                     "iscrowd": 0,
                     "keypoints": keypoints_coco,
                     "image_id": im_id,
