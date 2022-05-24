@@ -40,7 +40,7 @@ class PoleDetectKp(DataModule):
     eval_orientation_invariant = 0.0
     eval_extended_scale = False
 
-    batch_size = 8
+    batch_size = 4
     loader_workers = 0
 
     def __init__(self):
@@ -155,7 +155,8 @@ class PoleDetectKp(DataModule):
         return transforms.Compose([
                 transforms.NormalizeAnnotations(),
                 transforms.RescaleAbsolute(self.square_edge),
-                transforms.CenterPad(self.square_edge),
+                #transforms.CenterPad(self.square_edge),
+                transforms.CenterPadTight(16), #like in prediction
                 transforms.EVAL_TRANSFORM,
                 transforms.Encoders(encoders),
             ])

@@ -9,10 +9,11 @@ import openpifpaf
 
 # Idea: make predictor preprocessing identical to train preprocessing!
 
-
 #import constants
 from openpifpaf_pole_plugin.constants import POLE_KEYPOINTS, POLE_SKELETON, POLE_SIGMAS, POLE_CATEGORIES, POLE_POSE, POLE_SCORE_WEIGHTS
 from openpifpaf import encoder, headmeta, metric, transforms
+
+import pdb
 
 
 print('OpenPifPaf version', openpifpaf.__version__)
@@ -34,10 +35,11 @@ caf = headmeta.Caf('caf', 'pole_detect',
 head_metas = [cif, caf]
 
 pil_im = Image.open("/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/images/train/220511_1001.jpg")
-im = np.asarray(pil_im)
+img = np.asarray(pil_im)
 
-predictor = openpifpaf.Predictor(checkpoint='outputs/mobilenetv2-220523-163750-pole_detect.pkl.epoch170', head_metas=head_metas) 
-predictions, gt_anns, image_meta = predictor.numpy_image(im)
+predictor = openpifpaf.Predictor(checkpoint='outputs/mobilenetv2-220524-132344-pole_detect.pkl.epoch170', head_metas=head_metas) 
+predictor.long_edge = 513 #does not change anything
+predictions, gt_anns, image_meta = predictor.numpy_image(img)
 
 if len(predictions) == 0:
     print("No Keypoints found!")
