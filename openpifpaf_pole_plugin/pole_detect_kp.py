@@ -152,13 +152,19 @@ class PoleDetectKp(DataModule):
     def _preprocess(self):
         encoders = (encoder.Cif(self.head_metas[0], bmin=self.b_min),
                     encoder.Caf(self.head_metas[1], bmin=self.b_min))
-
         return transforms.Compose([
-            transforms.NormalizeAnnotations(),
-            transforms.Crop(self.square_edge, use_area_of_interest=True),
-            transforms.TRAIN_TRANSFORM, #converts PIL.Image to np.array
-            transforms.Encoders(encoders),
-        ])
+                transforms.NormalizeAnnotations(),
+                transforms.RescaleAbsolute(self.square_edge),
+                transforms.CenterPad(self.square_edge),
+                transforms.EVAL_TRANSFORM,
+                transforms.Encoders(encoders),
+            ])
+        # return transforms.Compose([
+        #     transforms.NormalizeAnnotations(),
+        #     transforms.Crop(self.square_edge, use_area_of_interest=True),
+        #     transforms.TRAIN_TRANSFORM, #converts PIL.Image to np.array
+        #     transforms.Encoders(encoders),
+        # ])
 
     def train_loader(self):
         train_data = CocoLoader(
