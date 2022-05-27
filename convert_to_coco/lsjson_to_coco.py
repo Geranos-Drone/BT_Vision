@@ -19,7 +19,7 @@ import shutil
 import numpy as np
 from PIL import Image
 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 POLE_KEYPOINTS = [
     'star',        #1
