@@ -84,10 +84,10 @@ keypoints, like color information, animal pose name, etc. We will load this file
 dataframe to extract information for visualization purposes.
 """
 
-IMG_DIR = "/home/nico/ComputerVisionBA/Code/BT_Vision/convert_to_coco/test_dataset_coco/images/train"
-IMG_DIR_VAL = "/home/nico/ComputerVisionBA/Code/BT_Vision/convert_to_coco/test_dataset_coco/images/val"
-JSON = "/home/nico/ComputerVisionBA/Code/BT_Vision/convert_to_coco/test_dataset_coco/annotations/pole_keypoints_8_train.json"
-JSON_VAL = "/home/nico/ComputerVisionBA/Code/BT_Vision/convert_to_coco/test_dataset_coco/annotations/pole_keypoints_8_val.json"
+IMG_DIR = "/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/images/train"
+IMG_DIR_VAL = "/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/images/val"
+JSON = "/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/annotations/pole_keypoints_8_train.json"
+JSON_VAL = "/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/annotations/pole_keypoints_8_val.json"
 KEYPOINT_DEF = (
     "keypoint_definitions.csv"
 )
@@ -389,7 +389,7 @@ For this example, we will train the network only for five epochs.
 """
 
 model = get_model()
-model.compile(loss="mse", optimizer=keras.optimizers.Adam(1e-4))
+model.compile(loss="mse", optimizer=keras.optimizers.Adam(1e-4), metrics=["accuracy"])
 model.fit(train_dataset, validation_data=validation_dataset, epochs=EPOCHS)
 
 
