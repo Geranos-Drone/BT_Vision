@@ -9,7 +9,7 @@ python3 -m openpifpaf.train --checkpoint=mobilenetv2 --dataset=pole_detect --epo
 python3 -m openpifpaf.predict <path_to_image> --checkpoint=<path_to_checkpoint> --long-edge=513
 
 
-python3 -m openpifpaf.predict /home/tim/BT_Vision/convert_to_coco/test_dataset_coco/images/train/220511_1001.jpg --checkpoint=outputs/mobilenetv2-220524-190800-pole_detect.pkl.epoch005 --long-edge=513 --decoder=cifcaf
+python3 -m openpifpaf.predict /home/tim/BT_Vision/convert_to_coco/test_dataset_coco_2/images/train/220511_1001.jpg --checkpoint=outputs/mobilenetv2-220525-151338-pole_detect.pkl.epoch300 --long-edge=513 --decoder=cifcaf
 
 ### Look into Log Files
 

@@ -5,7 +5,7 @@ try:
     from pycocotools.coco import COCO
 except ImportError:
     COCO = None
-
+import openpifpaf
 from openpifpaf.datasets import DataModule
 from openpifpaf import encoder, headmeta, metric, transforms
 from openpifpaf.datasets import collate_images_anns_meta, collate_images_targets_meta
@@ -17,11 +17,11 @@ class PoleDetectKp(DataModule):
     """
     DataModule for the Geranos Pole Dataset.
     """
-    train_annotations = 'convert_to_coco/test_dataset_coco/annotations/pole_keypoints_8_train.json'
-    val_annotations = 'convert_to_coco/test_dataset_coco/annotations/pole_keypoints_8_val.json'
+    train_annotations = 'convert_to_coco/test_dataset_coco_2/annotations/pole_keypoints_8_train.json'
+    val_annotations = 'convert_to_coco/test_dataset_coco_2/annotations/pole_keypoints_8_val.json'
     eval_annotations = val_annotations
-    train_image_dir = 'convert_to_coco/test_dataset_coco/images/train/'
-    val_image_dir = 'convert_to_coco/test_dataset_coco/images/val/'
+    train_image_dir = 'convert_to_coco/test_dataset_coco_2/images/train/'
+    val_image_dir = 'convert_to_coco/test_dataset_coco_2/images/val/'
     eval_image_dir = val_image_dir
 
     n_images = None
@@ -62,6 +62,9 @@ class PoleDetectKp(DataModule):
         cif.upsample_stride = self.upsample_stride
         caf.upsample_stride = self.upsample_stride
         self.head_metas = [cif, caf]
+        # cifdet = openpifpaf.headmeta.CifDet('cifdet', 'pole_detect_kp', ["pole"])
+        # cifdet.upsample_stride = self.upsample_stride
+        # self.head_metas = [cifdet]
 
     @classmethod
     def cli(cls, parser: argparse.ArgumentParser):
@@ -150,13 +153,14 @@ class PoleDetectKp(DataModule):
         cls.eval_extended_scale = args.pole_detect_eval_extended_scale
 
     def _preprocess(self):
+        # enc = openpifpaf.encoder.CifDet(self.head_metas[0])
         encoders = (encoder.Cif(self.head_metas[0], bmin=self.b_min),
                     encoder.Caf(self.head_metas[1], bmin=self.b_min))
         return transforms.Compose([
                 transforms.NormalizeAnnotations(),
                 transforms.RescaleAbsolute(self.square_edge),
-                #transforms.CenterPad(self.square_edge),
-                transforms.CenterPadTight(16), #like in prediction
+                transforms.CenterPad(self.square_edge),
+                # transforms.CenterPadTight(16), #like in prediction
                 transforms.EVAL_TRANSFORM,
                 transforms.Encoders(encoders),
             ])
@@ -174,14 +178,14 @@ class PoleDetectKp(DataModule):
             preprocess=self._preprocess(),
             annotation_filter=True,
             min_kp_anns=self.min_kp_anns,
-            category_ids=[420],
+            category_ids=[0],
         )
         print("train_loader was called")
         print("batch size = ", self.batch_size)
 
         return torch.utils.data.DataLoader(
             train_data, batch_size=self.batch_size, shuffle=not self.debug,
-            pin_memory=self.pin_memory, num_workers=self.loader_workers,
+            pin_memory=self.pin_memory, num_workers=4,
             drop_last=False, collate_fn = collate_images_targets_meta) #drop_last = True eigt.
 
     def val_loader(self):
@@ -191,11 +195,11 @@ class PoleDetectKp(DataModule):
             preprocess=self._preprocess(),
             annotation_filter=True,
             min_kp_anns=self.min_kp_anns,
-            category_ids=[420],
+            category_ids=[0],
         )
         return torch.utils.data.DataLoader(
             val_data, batch_size=self.batch_size, shuffle=False,
-            pin_memory=self.pin_memory, num_workers=self.loader_workers, drop_last=False, 
+            pin_memory=self.pin_memory, num_workers=4, drop_last=False, 
             collate_fn=collate_images_targets_meta) #drop_last = True eigt.
 
     @classmethod
@@ -208,8 +212,8 @@ class PoleDetectKp(DataModule):
             transforms.ToAnnotations([
                 transforms.ToKpAnnotations(
                     POLE_CATEGORIES,
-                    keypoints_by_category={420: self.head_metas[0].keypoints},
-                    skeleton_by_category={420: self.head_metas[1].skeleton},
+                    keypoints_by_category={0: self.head_metas[0].keypoints},
+                    skeleton_by_category={0: self.head_metas[1].skeleton},
                 ),
                 transforms.ToCrowdAnnotations(POLE_CATEGORIES),
             ]),
@@ -223,7 +227,7 @@ class PoleDetectKp(DataModule):
             preprocess=self._eval_preprocess(),
             annotation_filter=self.eval_annotation_filter,
             min_kp_anns=self.min_kp_anns if self.eval_annotation_filter else 0,
-            category_ids=[420] if self.eval_annotation_filter else [420],
+            category_ids=[0] if self.eval_annotation_filter else [0],
         )
         return torch.utils.data.DataLoader(
             eval_data, batch_size=self.batch_size, shuffle=False,
@@ -233,6 +237,6 @@ class PoleDetectKp(DataModule):
     def metrics(self):
         return [metric.Coco(COCO(self.eval_annotations),
                 max_per_image=20,
-                category_ids=[420],
+                category_ids=[0],
                 iou_type='keypoints',
                 keypoint_oks_sigmas=POLE_SIGMAS,)]
