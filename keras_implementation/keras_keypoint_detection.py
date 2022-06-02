@@ -1,52 +1,19 @@
+
+"""
+Keypoint detection for Pose Estimation of a Pole
+Authors: Nicolas Gorlo, Tim Reinhart
+Date created: 2022/05/23
+"""
+
+
+# Adapted from Keras Example:
+
 """
 Title: Keypoint Detection with Transfer Learning
 Author: [Sayak Paul](https://twitter.com/RisingSayak)
 Date created: 2021/05/02
 Last modified: 2021/05/02
 Description: Training a keypoint detector with data augmentation and transfer learning.
-"""
-"""
-Keypoint detection consists of locating key object parts. For example, the key parts
-of our faces include nose tips, eyebrows, eye corners, and so on. These parts help to
-represent the underlying object in a feature-rich manner. Keypoint detection has
-applications that include pose estimation, face detection, etc.
-In this example, we will build a keypoint detector using the
-[StanfordExtra dataset](https://github.com/benjiebob/StanfordExtra),
-using transfer learning. This example requires TensorFlow 2.4 or higher,
-as well as [`imgaug`](https://imgaug.readthedocs.io/) library,
-which can be installed using the following command:
-"""
-
-"""shell
-pip install -q -U imgaug
-"""
-
-"""
-## Data collection
-"""
-
-"""
-The StanfordExtra dataset contains 12,000 images of dogs together with keypoints and
-segmentation maps. It is developed from the [Stanford dogs dataset](http://vision.stanford.edu/aditya86/ImageNetDogs/).
-It can be downloaded with the command below:
-"""
-
-"""shell
-wget -q http://vision.stanford.edu/aditya86/ImageNetDogs/images.tar
-"""
-
-"""
-Annotations are provided as a single JSON file in the StanfordExtra dataset and one needs
-to fill [this form](https://forms.gle/sRtbicgxsWvRtRmUA) to get access to it. The
-authors explicitly instruct users not to share the JSON file, and this example respects this wish:
-you should obtain the JSON file yourself.
-The JSON file is expected to be locally available as `stanfordextra_v12.zip`.
-After the files are downloaded, we can extract the archives.
-"""
-
-"""shell
-tar xf images.tar
-unzip -qq ~/stanfordextra_v12.zip
 """
 
 """
@@ -75,13 +42,10 @@ import os
 IMG_SIZE = 224
 BATCH_SIZE = 4
 EPOCHS = 5
-NUM_KEYPOINTS = 8 # 9 keypoints each having x and y coordinates
+NUM_KEYPOINTS = 8 # 8 keypoints each having x and y coordinates
 
 """
 ## Load data
-The authors also provide a metadata file that specifies additional information about the
-keypoints, like color information, animal pose name, etc. We will load this file in a `pandas`
-dataframe to extract information for visualization purposes.
 """
 
 IMG_DIR = "/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/images/train"
