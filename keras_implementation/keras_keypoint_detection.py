@@ -1,14 +1,16 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[45]:
+
 
 """
-Keypoint detection for Pose Estimation of a Pole
-Authors: Nicolas Gorlo, Tim Reinhart
-Date created: 2022/05/23
+Title: Keypoint Detection with Transfer Learning for Pole detection
+Author: [Nicolas Gorlo, Tim Reinhart]
 """
 
-
-# Adapted from Keras Example:
-
 """
+Based on:
 Title: Keypoint Detection with Transfer Learning
 Author: [Sayak Paul](https://twitter.com/RisingSayak)
 Date created: 2021/05/02
@@ -35,23 +37,31 @@ import numpy as np
 import json
 import os
 
+
+# In[46]:
+
+
 """
 ## Define hyperparameters
 """
 
 IMG_SIZE = 224
 BATCH_SIZE = 4
-EPOCHS = 5
-NUM_KEYPOINTS = 8 # 8 keypoints each having x and y coordinates
+EPOCHS = 600
+NUM_KEYPOINTS = 7 # 7 keypoints each having x and y coordinates
+
+
+# In[47]:
+
 
 """
 ## Load data
 """
 
-IMG_DIR = "/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/images/train"
-IMG_DIR_VAL = "/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/images/val"
-JSON = "/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/annotations/pole_keypoints_8_train.json"
-JSON_VAL = "/home/tim/BT_Vision/convert_to_coco/test_dataset_coco/annotations/pole_keypoints_8_val.json"
+IMG_DIR = "/home/nico/ComputerVisionBA/Code/BT_Vision/convert_to_coco/vicon_dataset_coco/images/train"
+IMG_DIR_VAL = "/home/nico/ComputerVisionBA/Code/BT_Vision/convert_to_coco/vicon_dataset_coco/images/val"
+JSON = "/home/nico/ComputerVisionBA/Code/BT_Vision/convert_to_coco/vicon_dataset_coco/annotations/pole_keypoints_7_train.json"
+JSON_VAL = "/home/nico/ComputerVisionBA/Code/BT_Vision/convert_to_coco/vicon_dataset_coco/annotations/pole_keypoints_7_val.json"
 KEYPOINT_DEF = (
     "keypoint_definitions.csv"
 )
@@ -96,6 +106,10 @@ def coco_to_json_data(coco_data, IMG_DIR):
 json_data, json_dict = coco_to_json_data(coco_data, IMG_DIR)
 json_data_val, json_dict_val = coco_to_json_data(coco_data_val, IMG_DIR_VAL)
 
+
+# In[48]:
+
+
 # Load the metdata definition file and preview it.
 keypoint_def = pd.read_csv(KEYPOINT_DEF)
 keypoint_def.head()
@@ -133,9 +147,12 @@ colours = keypoint_def["Hex_colour"].values.tolist()
 colours = ["#" + colour for colour in colours]
 labels = keypoint_def["Name"].values.tolist()
 
+
+# In[ ]:
+
+
 """
 ## Visualize data
-Now, we write a utility function to visualize the images and their keypoints.
 """
 
 # Parts of this code come from here:
@@ -185,10 +202,12 @@ for sample in selected_samples:
 visualize_keypoints(images, keypoints)
 
 
+# In[50]:
+
+
 """
 ## Prepare data generator
 """
-
 
 class KeyPointsDataset(keras.utils.Sequence):
     def __init__(self, image_keys, aug, batch_size=BATCH_SIZE, train=True):
@@ -245,7 +264,7 @@ class KeyPointsDataset(keras.utils.Sequence):
                 kp_temp.append(np.nan_to_num(keypoint.x))
                 kp_temp.append(np.nan_to_num(keypoint.y))
 
-            # More on why this reshaping later.
+            # reshape to fit output shape of the network
             batch_keypoints[i,] = np.array(
                 kp_temp
             ).reshape(1, 1, NUM_KEYPOINTS * 2)
@@ -258,6 +277,9 @@ class KeyPointsDataset(keras.utils.Sequence):
 # doc keypoints in imgaug: [this document](https://imgaug.readthedocs.io/en/latest/source/examples_keypoints.html).
 
 
+# In[51]:
+
+
 """
 ## Define augmentation transforms
 """
@@ -265,14 +287,17 @@ class KeyPointsDataset(keras.utils.Sequence):
 train_aug = iaa.Sequential(
     [
         iaa.Resize(IMG_SIZE, interpolation="linear"),
-        iaa.Fliplr(0.3),
+        #iaa.Fliplr(0.3),
         # `Sometimes()` applies a function randomly to the inputs with
         # a given probability (0.3, in this case).
-        iaa.Sometimes(0.3, iaa.Affine(rotate=10, scale=(0.5, 0.7))),
+        #iaa.Sometimes(0.3, iaa.Affine(rotate=10, scale=(0.5, 0.7))),
     ]
 )
 
 test_aug = iaa.Sequential([iaa.Resize(IMG_SIZE, interpolation="linear")])
+
+
+# In[52]:
 
 
 """
@@ -286,6 +311,9 @@ train_keys = samples
 validation_keys = samples_val
 
 
+# In[ ]:
+
+
 """
 ## Data generator investigation
 """
@@ -297,11 +325,15 @@ print(f"Total batches in training set: {len(train_dataset)}")
 print(f"Total batches in validation set: {len(validation_dataset)}")
 
 sample_images, sample_keypoints = next(iter(train_dataset))
-assert sample_keypoints.max() == 1.0
-assert sample_keypoints.min() == 0.0
+assert sample_keypoints.max() <= 1.0
+assert sample_keypoints.min() >= 0.0
 
 sample_keypoints = sample_keypoints[:2].reshape(-1, NUM_KEYPOINTS, 2) * IMG_SIZE
 visualize_keypoints(sample_images[:2], sample_keypoints)
+
+
+# In[55]:
+
 
 """
 ## Model building
@@ -334,12 +366,19 @@ def get_model():
 
     return keras.Model(inputs, outputs, name="keypoint_detector")
 
+
+# In[ ]:
+
+
 """
 Our custom network is fully-convolutional which makes it more parameter-friendly than the
 same version of the network having fully-connected dense layers.
 """
 
 get_model().summary()
+
+
+# In[ ]:
 
 
 """
@@ -353,15 +392,23 @@ For this example, we will train the network only for five epochs.
 """
 
 model = get_model()
-model.compile(loss="mse", optimizer=keras.optimizers.Adam(1e-4), metrics=["accuracy"])
-model.fit(train_dataset, validation_data=validation_dataset, epochs=EPOCHS)
+model.compile(loss="mse", optimizer=keras.optimizers.Adam(1e-3), metrics=["accuracy"])
+model.fit(train_dataset, validation_data=validation_dataset, epochs=EPOCHS, batch_size=2)
 
+
+# In[ ]:
+
+
+#Save Model in Network folder
+model.save("network")
+
+
+# In[ ]:
 
 
 """
 ## Make predictions and visualize them
 """
-
 sample_val_images, sample_val_keypoints = next(iter(validation_dataset))
 sample_val_images = sample_val_images[:4]
 sample_val_keypoints = sample_val_keypoints[:4].reshape(-1, NUM_KEYPOINTS, 2) * IMG_SIZE
@@ -373,16 +420,35 @@ visualize_keypoints(sample_val_images, sample_val_keypoints)
 # Predictions
 visualize_keypoints(sample_val_images, predictions)
 
-"""
-Predictions will likely improve with more training.
-"""
+
+# In[ ]:
+
 
 """
-## Going further
-* Try using other augmentation transforms from `imgaug` to investigate how that changes
-the results.
-* Here, we transferred the features from the pre-trained network linearly that is we did
-not [fine-tune](https://keras.io/guides/transfer_learning/) it. You are encouraged to fine-tune it on this task and see if that
-improves the performance. You can also try different architectures and see how they
-affect the final performance.
+## Make predictions and visualize them
 """
+sample_val_images, sample_val_keypoints = next(iter(validation_dataset))
+sample_val_images = sample_val_images[:4]
+sample_val_keypoints = sample_val_keypoints[:4].reshape(-1, NUM_KEYPOINTS, 2) * IMG_SIZE
+predictions = model.predict(sample_val_images).reshape(-1, NUM_KEYPOINTS, 2) * IMG_SIZE
+
+# Ground-truth
+visualize_keypoints(sample_val_images, sample_val_keypoints)
+
+# Predictions
+visualize_keypoints(sample_val_images, predictions)
+
+
+"""
+## next steps
+* more "imgaug" augmentations
+* Fine tune features [fine-tune](https://keras.io/guides/transfer_learning/) it. 
+* adapt model (check coco keypoint detection challenge for inspirations)
+"""
+
+
+# In[ ]:
+
+
+
+
