@@ -22,14 +22,13 @@ from PIL import Image
 #import matplotlib.pyplot as plt
 
 POLE_KEYPOINTS = [
-    'star',        #1
-    'rhomb',       #2
-    'torp',        #3
-    'tear',        #4
-    'arrow',       #5
-    'triangle',    #6
-    'ninja',       #7
-    'bolt'         #8
+    'tip',              #1
+    'top_left',         #2
+    'top_right',        #3
+    'mid_left',         #4
+    'mid_right',        #5
+    'bottom_left',      #6
+    'bottom_right',     #7
 ]
 
 POLE_SKELETON = [
@@ -219,7 +218,7 @@ class LSJsonToCoco:
                         keypoints_coco.append(y_ii)
                         x_i.append(x_ii)
                         y_i.append(y_ii)
-                        keypoints_coco.append(2)
+                        keypoints_coco.append(1)
                         cnt_kps[label_index] += 1
                         num_keypoints += 1
 

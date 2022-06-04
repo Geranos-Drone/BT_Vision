@@ -1,10 +1,8 @@
 Index,Name,Hex_colour,name_in_pole_pose
-1,top_left,d82400,T_L
-2,top_middle,d82400,T_M
+1,tip,6a0dad,T_P
+2,top_left,d82400,T_L
 3,top_right,d82400,T_R
-4,middle_left,fcfc00,M_L
-5,middle_middle,fcfc00,M_M
-6,middle_right,fcfc00,M_R
-7,bottom_left,48b455,B_L
-8,bottom_middle,48b455,B_M
-9,bottom_right,48b455,B_R
+4,mid_left,fcfc00,M_L
+5,mid_right,fcfc00,M_R
+6,bottom_left,48b455,B_L
+7,bottom_right,48b455,B_R
