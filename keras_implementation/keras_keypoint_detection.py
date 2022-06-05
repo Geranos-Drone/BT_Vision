@@ -37,10 +37,6 @@ import numpy as np
 import json
 import os
 
-
-# In[46]:
-
-
 """
 ## Define hyperparameters
 """
@@ -49,9 +45,6 @@ IMG_SIZE = 224
 BATCH_SIZE = 4
 EPOCHS = 600
 NUM_KEYPOINTS = 7 # 7 keypoints each having x and y coordinates
-
-
-# In[47]:
 
 
 """
@@ -107,9 +100,6 @@ json_data, json_dict = coco_to_json_data(coco_data, IMG_DIR)
 json_data_val, json_dict_val = coco_to_json_data(coco_data_val, IMG_DIR_VAL)
 
 
-# In[48]:
-
-
 # Load the metdata definition file and preview it.
 keypoint_def = pd.read_csv(KEYPOINT_DEF)
 keypoint_def.head()
@@ -146,9 +136,6 @@ keypoint_def.head()
 colours = keypoint_def["Hex_colour"].values.tolist()
 colours = ["#" + colour for colour in colours]
 labels = keypoint_def["Name"].values.tolist()
-
-
-# In[ ]:
 
 
 """
@@ -199,11 +186,7 @@ for sample in selected_samples:
     images.append(image)
     keypoints.append(keypoint)
 
-visualize_keypoints(images, keypoints)
-
-
-# In[50]:
-
+#visualize_keypoints(images, keypoints)
 
 """
 ## Prepare data generator
@@ -264,7 +247,7 @@ class KeyPointsDataset(keras.utils.Sequence):
                 kp_temp.append(np.nan_to_num(keypoint.x))
                 kp_temp.append(np.nan_to_num(keypoint.y))
 
-            # reshape to fit output shape of the network
+            # reshape to fit output shape of the network `(None, 1, 1, NUM_KEYPOINTS*2)`
             batch_keypoints[i,] = np.array(
                 kp_temp
             ).reshape(1, 1, NUM_KEYPOINTS * 2)
@@ -275,10 +258,6 @@ class KeyPointsDataset(keras.utils.Sequence):
         return (batch_images, batch_keypoints)
 
 # doc keypoints in imgaug: [this document](https://imgaug.readthedocs.io/en/latest/source/examples_keypoints.html).
-
-
-# In[51]:
-
 
 """
 ## Define augmentation transforms
@@ -297,9 +276,6 @@ train_aug = iaa.Sequential(
 test_aug = iaa.Sequential([iaa.Resize(IMG_SIZE, interpolation="linear")])
 
 
-# In[52]:
-
-
 """
 ## Create training and validation splits
 """
@@ -309,9 +285,6 @@ np.random.shuffle(samples_val)
 
 train_keys = samples
 validation_keys = samples_val
-
-
-# In[ ]:
 
 
 """
@@ -329,20 +302,10 @@ assert sample_keypoints.max() <= 1.0
 assert sample_keypoints.min() >= 0.0
 
 sample_keypoints = sample_keypoints[:2].reshape(-1, NUM_KEYPOINTS, 2) * IMG_SIZE
-visualize_keypoints(sample_images[:2], sample_keypoints)
-
-
-# In[55]:
-
+#visualize_keypoints(sample_images[:2], sample_keypoints)
 
 """
 ## Model building
-The [Stanford dogs dataset](http://vision.stanford.edu/aditya86/ImageNetDogs/) (on which
-the StanfordExtra dataset is based) was built using the [ImageNet-1k dataset](http://image-net.org/).
-So, it is likely that the models pretrained on the ImageNet-1k dataset would be useful
-for this task. We will use a MobileNetV2 pre-trained on this dataset as a backbone to
-extract meaningful features from the images and then pass those to a custom regression
-head for predicting coordinates.
 """
 
 
@@ -367,28 +330,15 @@ def get_model():
     return keras.Model(inputs, outputs, name="keypoint_detector")
 
 
-# In[ ]:
-
-
 """
-Our custom network is fully-convolutional which makes it more parameter-friendly than the
+fully-convolutional makes it more parameter-friendly than the
 same version of the network having fully-connected dense layers.
 """
 
-get_model().summary()
-
-
-# In[ ]:
-
-
-"""
-Notice the output shape of the network: `(None, 1, 1, NUM_KEYPOINTS*2)`. This is why we have reshaped
-the coordinates as: `batch_keypoints[i, :] = np.array(kp_temp).reshape(1, 1, NUM_KEYPOINTS * 2)`.
-"""
+#get_model().summary()
 
 """
 ## Model compilation and training
-For this example, we will train the network only for five epochs.
 """
 
 model = get_model()
@@ -396,37 +346,14 @@ model.compile(loss="mse", optimizer=keras.optimizers.Adam(1e-3), metrics=["accur
 model.fit(train_dataset, validation_data=validation_dataset, epochs=EPOCHS, batch_size=2)
 
 
-# In[ ]:
-
-
 #Save Model in Network folder
 model.save("network")
 
 
-# In[ ]:
-
-
 """
 ## Make predictions and visualize them
 """
-sample_val_images, sample_val_keypoints = next(iter(validation_dataset))
-sample_val_images = sample_val_images[:4]
-sample_val_keypoints = sample_val_keypoints[:4].reshape(-1, NUM_KEYPOINTS, 2) * IMG_SIZE
-predictions = model.predict(sample_val_images).reshape(-1, NUM_KEYPOINTS, 2) * IMG_SIZE
 
-# Ground-truth
-visualize_keypoints(sample_val_images, sample_val_keypoints)
-
-# Predictions
-visualize_keypoints(sample_val_images, predictions)
-
-
-# In[ ]:
-
-
-"""
-## Make predictions and visualize them
-"""
 sample_val_images, sample_val_keypoints = next(iter(validation_dataset))
 sample_val_images = sample_val_images[:4]
 sample_val_keypoints = sample_val_keypoints[:4].reshape(-1, NUM_KEYPOINTS, 2) * IMG_SIZE
@@ -445,10 +372,5 @@ visualize_keypoints(sample_val_images, predictions)
 * Fine tune features [fine-tune](https://keras.io/guides/transfer_learning/) it. 
 * adapt model (check coco keypoint detection challenge for inspirations)
 """
-
-
-# In[ ]:
-
-
 
 
