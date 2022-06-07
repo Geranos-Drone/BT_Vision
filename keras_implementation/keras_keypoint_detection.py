@@ -42,8 +42,8 @@ import os
 """
 
 IMG_SIZE = 224
-BATCH_SIZE = 4
-EPOCHS = 600
+BATCH_SIZE = 16
+EPOCHS = 400
 NUM_KEYPOINTS = 7 # 7 keypoints each having x and y coordinates
 
 
