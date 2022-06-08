@@ -17,7 +17,7 @@ python3 -m openpifpaf.logs <path_to_log_file> --show
 
 python3 -m openpifpaf.logs /home/tim/BT_Vision/outputs/mobilenetv2-220523-163713-pole_detect.pkl.log --show
 
-# Install Environment
+# Install Environment for Openpifpaf
 
 1) Install PyTorch (pip cmd from website)
 2) pip install openpifpaf
