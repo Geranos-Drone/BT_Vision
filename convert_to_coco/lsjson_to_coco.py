@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[13]:
-
-
 """
 Convert json files in labelstudio json format into json file with COCO keypoint format
 """
@@ -19,20 +16,21 @@ import shutil
 import numpy as np
 from PIL import Image
 
-#import matplotlib.pyplot as plt
+# import matplotlib
+# import matplotlib.pyplot as plt
 
 POLE_KEYPOINTS = [
-    'tip',              #1
-    'top_left',         #2
-    'top_right',        #3
-    'mid_left',         #4
-    'mid_right',        #5
-    'bottom_left',      #6
-    'bottom_right',     #7
+    'tip',        #0
+    'top_left',       #1
+    'top_right',        #2
+    'mid_left',        #3
+    'mid_right',       #4
+    'bottom_left',    #5
+    'bottom_right',       #6
 ]
 
 POLE_SKELETON = [
-    [1,2],[1,4],[1,5],[2,3],[2,6],[3,4],[3,7],[4,8],[5,8],[5,6],[6,7],[7,8]
+    [0,1],[0,2],[1,2],[1,3],[2,4],[3,4],[3,5],[4,6],[5,6]
 ]
 
 def cli():
@@ -108,10 +106,10 @@ class LSJsonToCoco:
             if self.split_images:
                 path_dir = (os.path.join(self.dir_out_im, phase))
                 os.makedirs(path_dir, exist_ok=True)
-                assert not os.listdir(path_dir), "Directory to save images is not empty. "                     "Remove flag --split_images ?"
+                assert not os.listdir(path_dir), "Directory to save images is not empty."                     "Remove flag --split_images ?"
             elif self.single_sample:
                 im_paths = self.splits['train'][:1]
-                print(f'Single sample for train/val:{im_paths}')
+                print(f"Single sample for train/val: {im_paths}")
             
             for im_path in im_paths:
                 im_size, im_name, im_id = self._process_image(im_path,phase)
@@ -200,33 +198,27 @@ class LSJsonToCoco:
         for i_1 in range(len(data)):
             if int(data[i_1]['file_upload'].split(sep = '_')[-1].split(sep = ".")[0]) == im_id:
                 
-                keypoints_coco = []
+                keypoints_coco = [0.0] * (len(POLE_KEYPOINTS) * 3)
                 bbox_inst = []
                 area_inst = []
                 annotation_inst = data[i_1].get('annotations')
                 result_inst = annotation_inst[0].get('result')
-                i_2 = 0
                 x_i = []
                 y_i = []
                 num_keypoints = 0
                 im_size = [result_inst[0]['original_width'],result_inst[0]['original_height']]
                 for label_index, label_inst in enumerate(POLE_KEYPOINTS):
-                    if (i_2 < len(result_inst)) and (result_inst[i_2]['value']['keypointlabels'][0] == label_inst):
-                        x_ii = result_inst[i_2]['value']['x']*im_size[0]/100
-                        y_ii = result_inst[i_2]['value']['y']*im_size[1]/100
-                        keypoints_coco.append(x_ii)
-                        keypoints_coco.append(y_ii)
-                        x_i.append(x_ii)
-                        y_i.append(y_ii)
-                        keypoints_coco.append(1)
-                        cnt_kps[label_index] += 1
-                        num_keypoints += 1
-
-                        i_2 += 1
-                    else:
-                        keypoints_coco.append(0)
-                        keypoints_coco.append(0)
-                        keypoints_coco.append(0)
+                    for res in result_inst:
+                        if (res['value']['keypointlabels'][0] == label_inst):
+                            x_ii = res['value']['x']*im_size[0]/100
+                            y_ii = res['value']['y']*im_size[1]/100
+                            keypoints_coco[3*label_index] = x_ii
+                            keypoints_coco[3*label_index+1] = y_ii
+                            x_i.append(x_ii)
+                            y_i.append(y_ii)
+                            keypoints_coco[3*label_index+2] = 2.0
+                            cnt_kps[label_index] += 1
+                            num_keypoints += 1
 
                 box_tight = [np.min(x_i), np.min(y_i), np.max(x_i), np.max(y_i)]
                 w, h = box_tight[2] - box_tight[0], box_tight[3] - box_tight[1]
@@ -237,7 +229,7 @@ class LSJsonToCoco:
                 bbox_inst = [int(x_o), int(y_o), int(x_i - x_o), int(y_i - y_o)]  # (x, y, w, h)
 
                 
-                dict_ann ={
+                dict_ann = {
                     "segmentation":[],
                     "num_keypoints": num_keypoints,
                     "iscrowd": 0,
@@ -246,7 +238,8 @@ class LSJsonToCoco:
                     "category_id": 420,
                     "id": annotation_id,
                     "area": bbox_inst[2]*bbox_inst[3],
-                    "bbox": bbox_inst}
+                    "bbox": bbox_inst
+                }
                 self.coco_file["annotations"].append(dict_ann)
         
         return cnt_kps
@@ -292,28 +285,6 @@ def main():
 if __name__ == "__main__":
     main()
 
-"""path = os.path.join('test_dataset','annotations','ls_export.json')
-
-with open(path) as json_file:
-    data_ = json.load(json_file)
-
-
-for it in range(len(data_)):
-    img_name_ = data_[it]['file_upload'].split(sep='_')[1]
-    img_id_ = int(img_name_.split(sep='.')[0])
-    data_[it]['id'] = img_id_
-    data_[it]['annotations'][0]['id'] = img_id_
-
-data = data_
-im_id = 1002
-
-for i_1 in range(len(data)):
-    print(data[i_1]['file_upload'].split(sep = '_')[-1].split(sep = ".")[0])
-    if int(data[i_1]['file_upload'].split(sep = '_')[-1].split(sep = ".")[0]) == im_id:
-        print("1002")"""
-
-
-# In[ ]:
 
 
 
