@@ -17,18 +17,18 @@ class PoleDetectKp(DataModule):
     """
     DataModule for the Geranos Pole Dataset.
     """
-    train_annotations = 'convert_to_coco/test_dataset_coco_2/annotations/pole_keypoints_8_train.json'
-    val_annotations = 'convert_to_coco/test_dataset_coco_2/annotations/pole_keypoints_8_val.json'
+    train_annotations = 'convert_to_coco/vicon_dataset_div_coco/annotations/pole_keypoints_7_train.json'
+    val_annotations = 'convert_to_coco/vicon_dataset_div_coco/annotations/pole_keypoints_7_val.json'
     eval_annotations = val_annotations
-    train_image_dir = 'convert_to_coco/test_dataset_coco_2/images/train/'
-    val_image_dir = 'convert_to_coco/test_dataset_coco_2/images/val/'
+    train_image_dir = 'convert_to_coco/vicon_dataset_div_coco/images/train/'
+    val_image_dir = 'convert_to_coco/vicon_dataset_div_coco/images/val/'
     eval_image_dir = val_image_dir
 
-    n_images = None
-    square_edge = 513
+    n_images = 414
+    square_edge = 480
     extended_scale = False
     orientation_invariant = 0.0
-    blur = 0.0
+    blur = 0.005
     augmentation = True
     rescale_images = 1.0
     upsample_stride = 1
@@ -158,6 +158,13 @@ class PoleDetectKp(DataModule):
                     encoder.Caf(self.head_metas[1], bmin=self.b_min))
         return transforms.Compose([
                 transforms.NormalizeAnnotations(),
+                transforms.RandomApply(transforms.Blur(), self.blur),
+                transforms.RandomChoice(
+                [transforms.RotateBy90(),
+                 transforms.RotateUniform(20.0)],
+                [self.orientation_invariant, 0.2],
+                ),
+                
                 transforms.RescaleAbsolute(self.square_edge),
                 transforms.CenterPad(self.square_edge),
                 # transforms.CenterPadTight(16), #like in prediction
@@ -178,7 +185,7 @@ class PoleDetectKp(DataModule):
             preprocess=self._preprocess(),
             annotation_filter=True,
             min_kp_anns=self.min_kp_anns,
-            category_ids=[0],
+            category_ids=[420],
         )
         print("train_loader was called")
         print("batch size = ", self.batch_size)
@@ -195,7 +202,7 @@ class PoleDetectKp(DataModule):
             preprocess=self._preprocess(),
             annotation_filter=True,
             min_kp_anns=self.min_kp_anns,
-            category_ids=[0],
+            category_ids=[420],
         )
         return torch.utils.data.DataLoader(
             val_data, batch_size=self.batch_size, shuffle=False,
