@@ -6,6 +6,7 @@ import torchvision
 import requests
 import torch
 import openpifpaf
+import json
 
 # Idea: make predictor preprocessing identical to train preprocessing!
 
@@ -33,21 +34,25 @@ print('PyTorch version', torch.__version__)
 #                    skeleton=POLE_SKELETON)
 
 # head_metas = [cif, caf]
-
-pil_im = Image.open("/home/tim/BT_Vision/convert_to_coco/test_dataset_coco_2/images/train/220511_1001.jpg")
+path_img = "/home/" + USERNAME + "/BT_Vision/convert_to_coco/vicon_dataset_coco/images/train/220602_1033.jpg"
+path_network = "/home/" + USERNAME + "/BT_Vision/outputs/mobilenetv2-220622-202035-pole_detect.pkl.epoch900"
+pil_im = Image.open(path_img)
 img = np.asarray(pil_im)
 
-import ipdb; ipdb.set_trace()
+#import ipdb; ipdb.set_trace()
 
-predictor = openpifpaf.Predictor(checkpoint='outputs/mobilenetv2-220525-153628-pole_detect.pkl.epoch1500') 
-predictor.long_edge = 513 #does not change anything
+predictor = openpifpaf.Predictor(checkpoint=path_network)
+#predictor.long_edge = 513 #does not change anything
 predictions, gt_anns, image_meta = predictor.numpy_image(img)
-
 if len(predictions) == 0:
     print("No Keypoints found!")
 
+
 else:
     print("found something")
-    print(predictions)
+    print(predictions[0].data)
+    annotation_painter = openpifpaf.show.AnnotationPainter()
+    with openpifpaf.show.image_canvas(img) as ax:
+    	annotation_painter.annotations(ax, predictions)
 
 input("Press Enter to stop...")
