@@ -1,4 +1,4 @@
-# OpenPifPaf
+# OpenPifPaf for Pole Pose Esimation
 
 ### Training Command:
 
